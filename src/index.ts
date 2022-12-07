@@ -1,6 +1,7 @@
-import { express } from "express";
+import express from "express";
 import { createConnection } from "mysql2";
-
+import path from "path";
+import { json } from "body-parser";
 const app = express();
 const port = 3000;
 
@@ -13,25 +14,51 @@ const connection = createConnection({
 });
 
 // simple query
-connection.query("SELECT * FROM `users`", function (err, results, fields) {
-  console.log(results); // results contains rows returned by server
-  //   console.log(fields); // fields contains extra meta data about results, if available
+
+app.use(express.static("public"));
+app.use(json());
+
+app.get("/about", (req, res) => {
+  res.sendFile("about.html", { root: path.join(__dirname, "../public") });
 });
 
-
-app.get("/", (req, res) => {
-  res.send("Hello World!");
+app.get("/api", (req, res) => {
+  res.json({ foo: "bar" });
 });
 
-app.use(express)
-
-app.get("/posts", (req, res) => {
-  res.send([
+app.get("/api/posts", (req, res) => {
+  res.status(200).json([
     {
       id: 1,
       title: "first post",
     },
+    {
+      id: 2,
+      title: "first post",
+    },
   ]);
+});
+
+app.get("/api/users", (req, res) => {
+  connection.query("SELECT * FROM `users`", function (err, results, fields) {
+    res.status(200).json(results);
+  });
+});
+
+app.post("/api/users", (req, res) => {
+  connection.query("SELECT * FROM `users`", function (err, results, fields) {
+    res.status(200).json(results);
+  });
+});
+
+app.get("/api/users/:id", (req, res) => {
+  const id = req.params.id;
+  connection.query(
+    `SELECT * FROM users where id = ${id}`,
+    function (err, results, fields) {
+      res.status(200).json(results);
+    }
+  );
 });
 
 app.listen(port, () => {
